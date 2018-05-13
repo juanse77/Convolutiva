@@ -73,7 +73,7 @@ def myModel(X, reuse=False):
         o3 = tf.layers.conv2d(inputs=o2, filters=64, kernel_size=3, activation=tf.nn.relu)
         o4 = tf.layers.max_pooling2d(inputs=o3, pool_size=2, strides=2)
 
-        h = tf.layers.dense(inputs=tf.reshape(o4, [batch_size * 3, 18 * 33 * 64]), units=30, activation=tf.nn.relu)
+        h = tf.layers.dense(inputs=tf.reshape(o4, [batch_size * 3, 18 * 33 * 64]), units=50, activation=tf.nn.relu)
         y = tf.layers.dense(inputs=h, units=3, activation=tf.nn.softmax)
 
     return y
@@ -95,7 +95,7 @@ y_ = tf.placeholder(tf.float32, [None, 3])
 correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01).minimize(cost)
+optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.0005).minimize(cost)
 
 # --------------------------------------------------
 #
@@ -121,8 +121,9 @@ with tf.Session() as sess:
     accuracyBefore = 0
     accuracyAfter = 0
     mejora = 1
+    accuracyValid = 0
 
-    while (mejora > 0.05 or accuracyAfter < 0.90) and epoch < 100:
+    while (mejora > 0.01 or accuracyAfter < 0.95 or accuracyValid < 0.95) and epoch < 200:
         epoch += 1
         sess.run(optimizer)
 
@@ -140,7 +141,9 @@ with tf.Session() as sess:
         print("Error de entrenamiento:", aux_train)
         print("Error de validación:", aux_valid)
         print("Precisión de entrenamiento: ", accuracyAfter)
-        print("Precisión de validación: ", sess.run(accuracy, feed_dict={y:example_batch_valid_predicted.eval(), y_: label_batch_valid.eval()}))
+
+        accuracyValid = sess.run(accuracy, feed_dict={y:example_batch_valid_predicted.eval(), y_: label_batch_valid.eval()})
+        print("Precisión de validación: ", accuracyValid)
 
         errorTrain.append(aux_train)
         errorValid.append(aux_valid)
@@ -163,11 +166,16 @@ plt.legend()
 plt.show()
 
 """
-76 iteraciones, 5 neuronas: error train/valid/test: 3.404906/5.831165/6.7976823; precisión train/valid/test: 1.0/0.5/0.83
-34 iteraciones, 10 neuronas: error train/valid/test: 0.5181379/4.3331785/4.2009907; precisión train/valid/test: 1.0/0.83/0.92
-28 iteraciones, 15 neuronas: error train/valid/test: 2.8894546/3.2216973/3.5537062; precisión train/valid/test: 1.0/1.0/0.83
-30 iteraciones, 20 neuronas: error train/valid/test: 2.0864758/3.4267962/3.77769; precisión train/valid/test: 1.0/0.83/0.75
-30 iteraciones, 30 neuronas: error train/valid/test: 0.6253191/2.297392/3.0339146; precisión train/valid/test: 1.0/1.0/0.92
-11 iteraciones, 50 neuronas: error train/valid/test: 1.4662057/3.3126972/3.684247; precisión train/valid/test: 1.0/0.83/0.92
-12 iteraciones, 80 neuronas: error train/valid/test: 1.6972865/5.0280867/2.1076648; precisión train/valid/test: 1.0/0.83/0.92
+LR 0,01; 76 iteraciones, 5 neuronas: error train/valid/test: 3.404906/5.831165/6.7976823; precisión train/valid/test: 1.0/0.5/0.83
+LR 0,01; 34 iteraciones, 10 neuronas: error train/valid/test: 0.5181379/4.3331785/4.2009907; precisión train/valid/test: 1.0/0.83/0.92
+LR 0,01; 28 iteraciones, 15 neuronas: error train/valid/test: 2.8894546/3.2216973/3.5537062; precisión train/valid/test: 1.0/1.0/0.83
+LR 0,01; 30 iteraciones, 20 neuronas: error train/valid/test: 2.0864758/3.4267962/3.77769; precisión train/valid/test: 1.0/0.83/0.75
+LR 0,01; 30 iteraciones, 30 neuronas: error train/valid/test: 0.6253191/2.297392/3.0339146; precisión train/valid/test: 1.0/1.0/0.92
+LR 0,01; 11 iteraciones, 50 neuronas: error train/valid/test: 1.4662057/3.3126972/3.684247; precisión train/valid/test: 1.0/0.83/0.92
+LR 0,01; 12 iteraciones, 80 neuronas: error train/valid/test: 1.6972865/5.0280867/2.1076648; precisión train/valid/test: 1.0/0.83/0.92
+
+LR 0,005; 28 iteraciones, 30 neuronas: error train/valid/test: 3.2913551/3.035833/3.3330903; precisión train/valid/test: 1.0/1.0/1.0
+LR 0,00125; 37 iteraciones, 30 neuronas: error train/valid/test: 5.465475/5.7464576/5.844512; precisión train/valid/test: 1.0/1.0/0.92
+LR 0,00125; 30 iteraciones, 50 neuronas: error train/valid/test: 7.2833586/7.384545/7.317519; precisión train/valid/test: 1.0/1.0/1.0
+LR 0,0005; 103 iteraciones, 50 neuronas: error train/valid/test: 4.937017/4.6410646/4.66202; precisión train/valid/test: 1.0/1.0/1.0
 """
